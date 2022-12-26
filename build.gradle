@@ -1,3 +1,9 @@
+buildscript {
+    dependencies {
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
+    }
+}
+
 plugins {
     id 'java'
     id 'idea'
@@ -8,8 +14,6 @@ plugins {
     id 'de.undercouch.download' version '4.1.1'
     id 'org.ajoberstar.git-publish' version '3.0.1'
 }
-
-
 
 ext {
     bouncycastleVersion = '1.68'
@@ -104,3 +108,5 @@ allprojects {
 configure(subprojects.findAll { it.name != 'integration-tests' }) {
     apply from: "$rootDir/gradle/jacoco/build.gradle"
 }
+
+group='com.github.bbang208'
