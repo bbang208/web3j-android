@@ -61,7 +61,7 @@ description 'Web3j base project.'
 }
 
 allprojects {
-    group - 'com.github.bbang208'
+    group = 'com.github.bbang208'
     apply {
         [
             'java',
