@@ -40,6 +40,10 @@ import org.web3j.abi.datatypes.reflection.Parameterized;
 import org.web3j.compat.Compat;
 
 /** Utility functions. */
+
+/**
+ * Updated on 2022.12.26
+ */
 public class Utils {
     private Utils() {}
 
