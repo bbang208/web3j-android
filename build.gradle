@@ -1,3 +1,9 @@
+buildscript {
+    dependencies {
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
+    }
+}
+
 plugins {
     id 'java'
     id 'idea'
@@ -54,6 +60,7 @@ description 'Web3j base project.'
 }
 
 allprojects {
+    group = 'com.github.bbang208'
     apply {
         [
             'java',

@@ -2,9 +2,14 @@ import java.text.SimpleDateFormat
 
 apply plugin: 'org.ajoberstar.git-publish'
 
+apply plugin: 'com.github.dcendents.android-maven'
+
 
 description 'web3j is a lightweight Java library for integration with Ethereum clients'
 
+allprojects {
+    group = 'com.github.bbang208'
+}
 dependencies {
     compile project(':abi'),
             project(':crypto'),
