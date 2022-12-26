@@ -54,6 +54,7 @@ import org.web3j.utils.Numeric;
 
 import static org.web3j.abi.DefaultFunctionReturnDecoder.getDataOffset;
 import static org.web3j.abi.TypeReference.makeTypeReference;
+import static org.web3j.abi.Utils.findStructConstructor;
 import static org.web3j.abi.Utils.getSimpleTypeName;
 import static org.web3j.abi.Utils.staticStructNestedPublicFieldsFlatList;
 
@@ -61,6 +62,10 @@ import static org.web3j.abi.Utils.staticStructNestedPublicFieldsFlatList;
  * Ethereum Contract Application Binary Interface (ABI) decoding for types. Decoding is not
  * documented, but is the reverse of the encoding details located <a
  * href="https://github.com/ethereum/wiki/wiki/Ethereum-Contract-ABI">here</a>.
+ *
+ * <p>The public API is composed of "decode*" methods and provides backward-compatbility. See
+ * https://github.com/web3j/web3j/issues/1591 for a discussion about decoding and possible
+ * improvements.
  */
 public class TypeDecoder {
 
@@ -98,7 +103,7 @@ public class TypeDecoder {
     }
 
     @SuppressWarnings("unchecked")
-    static <T extends Type> T decode(String input, int offset, Class<T> type) {
+    public static <T extends Type> T decode(String input, int offset, Class<T> type) {
         if (NumericType.class.isAssignableFrom(type)) {
             return (T) decodeNumeric(input.substring(offset), (Class<NumericType>) type);
         } else if (Address.class.isAssignableFrom(type)) {
@@ -119,15 +124,15 @@ public class TypeDecoder {
         }
     }
 
-    static <T extends Type> T decode(String input, Class<T> type) {
+    public static <T extends Type> T decode(String input, Class<T> type) {
         return decode(input, 0, type);
     }
 
-    static Address decodeAddress(String input) {
+    public static Address decodeAddress(String input) {
         return new Address(decodeNumeric(input, Uint160.class));
     }
 
-    static <T extends NumericType> T decodeNumeric(String input, Class<T> type) {
+    public static <T extends NumericType> T decodeNumeric(String input, Class<T> type) {
         try {
             byte[] inputByteArray = Numeric.hexStringToByteArray(input);
             int typeLengthAsBytes = getTypeLengthInBytes(type);
@@ -277,18 +282,18 @@ public class TypeDecoder {
         return decode(input, 0, Uint.class).getValue().intValue();
     }
 
-    static Bool decodeBool(String rawInput, int offset) {
+    public static Bool decodeBool(String rawInput, int offset) {
         String input = rawInput.substring(offset, offset + MAX_BYTE_LENGTH_FOR_HEX_STRING);
         BigInteger numericValue = Numeric.toBigInt(input);
         boolean value = numericValue.equals(BigInteger.ONE);
         return new Bool(value);
     }
 
-    static <T extends Bytes> T decodeBytes(String input, Class<T> type) {
+    public static <T extends Bytes> T decodeBytes(String input, Class<T> type) {
         return decodeBytes(input, 0, type);
     }
 
-    static <T extends Bytes> T decodeBytes(String input, int offset, Class<T> type) {
+    public static <T extends Bytes> T decodeBytes(String input, int offset, Class<T> type) {
         try {
             String simpleName = type.getSimpleName();
             String[] splitName = simpleName.split(Bytes.class.getSimpleName());
@@ -309,7 +314,7 @@ public class TypeDecoder {
         }
     }
 
-    static DynamicBytes decodeDynamicBytes(String input, int offset) {
+    public static DynamicBytes decodeDynamicBytes(String input, int offset) {
         int encodedLength = decodeUintAsInt(input, offset);
         int hexStringEncodedLength = encodedLength << 1;
 
@@ -321,7 +326,7 @@ public class TypeDecoder {
         return new DynamicBytes(bytes);
     }
 
-    static Utf8String decodeUtf8String(String input, int offset) {
+    public static Utf8String decodeUtf8String(String input, int offset) {
         DynamicBytes dynamicBytesResult = decodeDynamicBytes(input, offset);
         byte[] bytes = dynamicBytesResult.getValue();
 
@@ -330,7 +335,7 @@ public class TypeDecoder {
 
     /** Static array length cannot be passed as a type. */
     @SuppressWarnings("unchecked")
-    static <T extends Type> T decodeStaticArray(
+    public static <T extends Type> T decodeStaticArray(
             String input, int offset, TypeReference<T> typeReference, int length) {
 
         BiFunction<List<T>, String, T> function =
@@ -462,7 +467,7 @@ public class TypeDecoder {
     }
 
     @SuppressWarnings("unchecked")
-    static <T extends Type> T decodeDynamicArray(
+    public static <T extends Type> T decodeDynamicArray(
             String input, int offset, TypeReference<T> typeReference) {
 
         int length = decodeUintAsInt(input, offset);
@@ -475,7 +480,7 @@ public class TypeDecoder {
         return decodeArrayElements(input, valueOffset, typeReference, length, function);
     }
 
-    static <T extends Type> T decodeDynamicStruct(
+    public static <T extends Type> T decodeDynamicStruct(
             String input, int offset, TypeReference<T> typeReference) {
 
         BiFunction<List<T>, String, T> function =
@@ -525,13 +530,10 @@ public class TypeDecoder {
                 final T value;
                 final int beginIndex = offset + staticOffset;
                 if (isDynamic(declaredField)) {
-                    final boolean isOnlyParameterInStruct = length == 1;
                     final int parameterOffset =
-                            isOnlyParameterInStruct
-                                    ? offset
-                                    : (decodeDynamicStructDynamicParameterOffset(
-                                                    input.substring(beginIndex, beginIndex + 64)))
-                                            + offset;
+                            decodeDynamicStructDynamicParameterOffset(
+                                            input.substring(beginIndex, beginIndex + 64))
+                                    + offset;
                     parameterOffsets.add(parameterOffset);
                     staticOffset += 64;
                 } else {
@@ -566,13 +568,17 @@ public class TypeDecoder {
                                             - parameterOffsets.get(dynamicParametersProcessed)
                                     : parameterOffsets.get(dynamicParametersProcessed + 1)
                                             - parameterOffsets.get(dynamicParametersProcessed);
+                    final Class<T> parameterFromAnnotation =
+                            Utils.extractParameterFromAnnotation(
+                                    constructor.getParameterAnnotations()[i]);
                     parameters.put(
                             i,
                             decodeDynamicParameterFromStruct(
                                     input,
                                     parameterOffsets.get(dynamicParametersProcessed),
                                     parameterLength,
-                                    declaredField));
+                                    declaredField,
+                                    parameterFromAnnotation));
                     dynamicParametersProcessed++;
                 }
             }
@@ -606,15 +612,21 @@ public class TypeDecoder {
             final String input,
             final int parameterOffset,
             final int parameterLength,
-            final Class<T> declaredField) {
+            final Class<T> declaredField,
+            final Class<T> parameter) {
         final String dynamicElementData =
                 input.substring(parameterOffset, parameterOffset + parameterLength);
 
         final T value;
         if (DynamicStruct.class.isAssignableFrom(declaredField)) {
+            value = decodeDynamicStruct(dynamicElementData, 0, TypeReference.create(declaredField));
+        } else if (DynamicArray.class.isAssignableFrom(declaredField)) {
             value =
-                    decodeDynamicStruct(
-                            dynamicElementData, 64, TypeReference.create(declaredField));
+                    (T)
+                            decodeDynamicArray(
+                                    dynamicElementData,
+                                    0,
+                                    Utils.getDynamicArrayTypeReference(parameter));
         } else {
             value = decode(dynamicElementData, declaredField);
         }
