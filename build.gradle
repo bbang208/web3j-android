@@ -8,6 +8,7 @@ plugins {
     id 'java'
     id 'idea'
     id 'jacoco'
+    id 'com.github.dcendents.android-maven' version '2.1'
     id 'com.diffplug.gradle.spotless' version '4.5.1'
     id 'io.codearte.nexus-staging' version '0.22.0'
     id 'de.marcphilipp.nexus-publish' version '0.4.0'
@@ -60,6 +61,7 @@ description 'Web3j base project.'
 }
 
 allprojects {
+    group - 'com.github.bbang208'
     apply {
         [
             'java',
