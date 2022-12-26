@@ -36,6 +36,7 @@ import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.Ufixed;
 import org.web3j.abi.datatypes.Uint;
 import org.web3j.abi.datatypes.Utf8String;
+import org.web3j.abi.datatypes.reflection.Parameterized;
 import org.web3j.compat.Compat;
 
 /** Utility functions. */
