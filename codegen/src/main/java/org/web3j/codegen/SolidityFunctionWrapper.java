@@ -485,7 +485,8 @@ public class SolidityFunctionWrapper extends Generator {
                 if (type.equals("tuple")) {
                     nativeTypeName =
                             typeName = structClassNameMap.get(component.structIdentifier());
-                } else if (type.startsWith("tuple") && type.contains("[")) {
+                    //TODO Edit This line
+                } else if (type.contains("[")) {
                     nativeTypeName = buildStructArrayTypeName(component, false);
                     typeName = buildStructArrayTypeName(component, useNativeJavaTypes);
 
