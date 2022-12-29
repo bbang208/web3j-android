@@ -495,7 +495,7 @@ public class SolidityFunctionWrapper extends Generator {
                             AnnotationSpec.builder(Parameterized.class)
                                     .addMember(
                                             "type",
-                                            "$T.class",
+                                            "$T.class".substring(0, 1).toUpperCase() + "$T.class".substring(1).toLowerCase(),
                                             ClassName.get("", resolveStructName(component)))
                                     .build();
                 } else {
