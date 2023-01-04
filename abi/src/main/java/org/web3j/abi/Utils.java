@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.DynamicArray;
 import org.web3j.abi.datatypes.DynamicBytes;
 import org.web3j.abi.datatypes.Fixed;
@@ -40,6 +41,10 @@ import org.web3j.abi.datatypes.reflection.Parameterized;
 import org.web3j.compat.Compat;
 
 /** Utility functions. */
+
+/**
+ * Updated on 2022.12.26
+ */
 public class Utils {
     private Utils() {}
 
@@ -54,7 +59,6 @@ public class Utils {
             } else if (typeReference.getSubTypeReference() != null) {
                 return getParameterizedTypeName(typeReference, typeReference.getClassType());
             } else {
-                //type = Class.forName(Compat.getTypeName(reflectedType));
                 type = Class.forName(Compat.getTypeName(reflectedType));
                 if (StructType.class.isAssignableFrom(type)) {
                     return getStructType(type);
@@ -79,6 +83,7 @@ public class Utils {
                         extractParameterFromAnnotation(constructor.getParameterAnnotations()[i]);
                 if (parameterAnnotation != null) {
                     sb.append(getTypeName(getDynamicArrayTypeReference(parameterAnnotation)));
+                    //sb.append(getTypeName(getDynamicArrayTypeReference(Address.class)));
                 } else {
                     sb.append(getTypeName(TypeReference.create(cls)));
                 }
@@ -100,8 +105,7 @@ public class Utils {
         };
     }
 
-    public static <T extends Type> Class<T> extractParameterFromAnnotation(
-            Annotation[] parameterAnnotation) {
+    public static <T extends Type> Class<T> extractParameterFromAnnotation(Annotation[] parameterAnnotation) {
         for (Annotation a : parameterAnnotation) {
             if (Parameterized.class.isInstance(a)) {
                 return (Class<T>) ((Parameterized) a).type();
